@@ -23,14 +23,18 @@ export function SpotRankingCard({ recommendation }: SpotRankingCardProps) {
       </div>
 
       <div className="pill-row">
-        <span className="pill">狙い魚: {recommendation.forecast.targetSpecies.join(" / ")}</span>
-        <span className="pill">狙い目: {recommendation.forecast.recommendedWindows.join(" / ")}</span>
+        <span className="pill">
+          狙い魚: {recommendation.forecast.targetSpecies.map((species) => species.name).join(" / ")}
+        </span>
+        <span className="pill">狙い目: {recommendation.forecast.recommendedTimeSlots.join(" / ")}</span>
       </div>
 
       <ReasonList reasons={recommendation.reasons} />
 
       <div className="card-note">
-        <strong>注意:</strong> {recommendation.caution}
+        <strong>気をつけたいこと:</strong> {recommendation.primaryAdvisory.summary}
+        <br />
+        {recommendation.primaryAdvisory.actionTip}
       </div>
 
       <div className="card-actions">

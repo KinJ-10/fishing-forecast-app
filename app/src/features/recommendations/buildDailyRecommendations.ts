@@ -7,7 +7,7 @@ export async function buildDailyRecommendations(
 ): Promise<Recommendation[]> {
   const [spots, forecasts] = await Promise.all([
     repository.listSpots(),
-    repository.getForecastsByDate(date),
+    repository.getDailyForecasts({ date }),
   ]);
 
   const bySpotId = new Map(spots.map((spot) => [spot.id, spot]));

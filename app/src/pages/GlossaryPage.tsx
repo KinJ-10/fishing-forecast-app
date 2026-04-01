@@ -17,9 +17,9 @@ export function GlossaryPage() {
         {terms.map((term) => (
           <article key={term.id} className="card glossary-card">
             <h3>{term.term}</h3>
-            <p>{term.meaning}</p>
+            <p>{term.plainMeaning}</p>
             <div className="card-note">
-              <strong>初心者向けの見方:</strong> {term.beginnerTip}
+              <strong>どう動くとよいか:</strong> {term.actionTip}
             </div>
           </article>
         ))}

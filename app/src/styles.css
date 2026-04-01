@@ -253,6 +253,15 @@ h3 {
   padding-left: 18px;
 }
 
+.reason-list li {
+  display: grid;
+  gap: 6px;
+}
+
+.reason-action {
+  color: var(--muted);
+}
+
 .data-list {
   list-style: none;
   padding-left: 0;

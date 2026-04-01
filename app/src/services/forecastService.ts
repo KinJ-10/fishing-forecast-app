@@ -1,8 +1,23 @@
-import { GlossaryTerm, Recommendation, Spot, SpotId } from "../domain/models";
+import {
+  ForecastRepository,
+  GlossaryTerm,
+  Recommendation,
+  RepositoryMeta,
+  Spot,
+  SpotId,
+} from "../domain/models";
 import { MockForecastRepository } from "../data/repositories/mockForecastRepository";
 import { buildDailyRecommendations } from "../features/recommendations/buildDailyRecommendations";
 
-const repository = new MockForecastRepository();
+let repository: ForecastRepository = new MockForecastRepository();
+
+export function setForecastRepository(nextRepository: ForecastRepository): void {
+  repository = nextRepository;
+}
+
+export async function getRepositoryMeta(): Promise<RepositoryMeta> {
+  return repository.getRepositoryMeta();
+}
 
 export async function getAvailableDates(): Promise<string[]> {
   return repository.listAvailableDates();
@@ -28,5 +43,5 @@ export async function getSpotDetail(
 }
 
 export async function getGlossary(): Promise<GlossaryTerm[]> {
-  return repository.getGlossaryTerms();
+  return repository.listGlossaryTerms();
 }
