@@ -1,47 +1,128 @@
+import { ForecastRepository, GlossaryTerm, Recommendation, RepositoryMeta, Spot, SpotId } from "../domain/models";
+import { SourceCatalogEntry, SourceFetchReport } from "../domain/sourceIntegration";
 import {
-  ForecastRepository,
-  GlossaryTerm,
-  Recommendation,
-  RepositoryMeta,
-  Spot,
-  SpotId,
-} from "../domain/models";
-import { MockForecastRepository } from "../data/repositories/mockForecastRepository";
-import { buildDailyRecommendations } from "../features/recommendations/buildDailyRecommendations";
+  buildDailyRecommendations,
+  buildDailyRecommendationsResult,
+} from "../features/recommendations/buildDailyRecommendations";
+import {
+  createForecastRepositoryForMode,
+  extendRepositoryMeta,
+  ForecastRepositoryRuntime,
+  resolveForecastRepositoryRuntime,
+} from "./forecastRepositoryMode";
 
-let repository: ForecastRepository = new MockForecastRepository();
+export interface ForecastDiagnostics {
+  runtime: ForecastRepositoryRuntime;
+  repositoryMeta: RepositoryMeta;
+  partial: boolean;
+  reports: SourceFetchReport[];
+}
 
-export function setForecastRepository(nextRepository: ForecastRepository): void {
+let repositoryRuntime = resolveForecastRepositoryRuntime(import.meta.env);
+let repository: ForecastRepository = createForecastRepositoryForMode(repositoryRuntime);
+
+export function setForecastRepository(
+  nextRepository: ForecastRepository,
+  runtimeOverride?: ForecastRepositoryRuntime,
+): void {
   repository = nextRepository;
+  repositoryRuntime =
+    runtimeOverride ??
+    {
+      mode: "mock",
+      note: "manual repository override を使っています。",
+    };
+}
+
+export function getForecastRepositoryRuntime(): ForecastRepositoryRuntime {
+  return repositoryRuntime;
+}
+
+export function resetForecastRepositoryFromEnv(env: ImportMetaEnv = import.meta.env): void {
+  repositoryRuntime = resolveForecastRepositoryRuntime(env);
+  repository = createForecastRepositoryForMode(repositoryRuntime);
 }
 
 export async function getRepositoryMeta(): Promise<RepositoryMeta> {
-  return repository.getRepositoryMeta();
+  const meta = await repository.getRepositoryMeta();
+  return extendRepositoryMeta(meta, repositoryRuntime);
+}
+
+export async function getSourceCatalog(): Promise<SourceCatalogEntry[]> {
+  return repository.getSourceCatalog();
 }
 
 export async function getAvailableDates(): Promise<string[]> {
-  return repository.listAvailableDates();
+  const result = await repository.listAvailableDates();
+  return result.data;
 }
 
 export async function getDailyRecommendations(date: string): Promise<Recommendation[]> {
   return buildDailyRecommendations(repository, date);
 }
 
+export async function getDailyRecommendationsWithDiagnostics(date: string): Promise<{
+  recommendations: Recommendation[];
+  diagnostics: ForecastDiagnostics;
+}> {
+  const [meta, result] = await Promise.all([
+    getRepositoryMeta(),
+    buildDailyRecommendationsResult(repository, date),
+  ]);
+
+  return {
+    recommendations: result.data,
+    diagnostics: {
+      runtime: repositoryRuntime,
+      repositoryMeta: meta,
+      partial: result.partial,
+      reports: result.reports,
+    },
+  };
+}
+
 export async function getSpotDetail(
   spotId: SpotId,
   date: string,
 ): Promise<{ spot?: Spot; recommendation?: Recommendation }> {
-  const [spot, recommendations] = await Promise.all([
+  const [spotResult, recommendations] = await Promise.all([
     repository.getSpotById(spotId),
     buildDailyRecommendations(repository, date),
   ]);
 
   return {
-    spot,
+    spot: spotResult.data,
     recommendation: recommendations.find((item) => item.spot.id === spotId),
   };
 }
 
+export async function getSpotDetailWithDiagnostics(
+  spotId: SpotId,
+  date: string,
+): Promise<{
+  spot?: Spot;
+  recommendation?: Recommendation;
+  diagnostics: ForecastDiagnostics;
+}> {
+  const [spotResult, meta, recommendationResult] = await Promise.all([
+    repository.getSpotById(spotId),
+    getRepositoryMeta(),
+    buildDailyRecommendationsResult(repository, date),
+  ]);
+
+  return {
+    spot: spotResult.data,
+    recommendation: recommendationResult.data.find((item) => item.spot.id === spotId),
+    diagnostics: {
+      runtime: repositoryRuntime,
+      repositoryMeta: meta,
+      partial: spotResult.partial || recommendationResult.partial,
+      reports: [...spotResult.reports, ...recommendationResult.reports],
+    },
+  };
+}
+
 export async function getGlossary(): Promise<GlossaryTerm[]> {
-  return repository.listGlossaryTerms();
+  const result = await repository.listGlossaryTerms();
+  return result.data;
 }

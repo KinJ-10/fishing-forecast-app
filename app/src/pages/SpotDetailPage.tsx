@@ -1,3 +1,4 @@
+import { ForecastDebugPanel } from "../components/ForecastDebugPanel";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { ReasonList } from "../components/ReasonList";
 import { ScoreBadge } from "../components/ScoreBadge";
@@ -21,7 +22,7 @@ export function SpotDetailPage() {
     );
   }
 
-  const { loading, spot, recommendation } = useSpotRecommendation(spotId as SpotId, date);
+  const { loading, spot, recommendation, diagnostics } = useSpotRecommendation(spotId as SpotId, date);
 
   if (loading) {
     return <section className="card">読み込み中です。</section>;
@@ -239,6 +240,15 @@ export function SpotDetailPage() {
           </ul>
         </article>
       </section>
+
+      {diagnostics ? (
+        <ForecastDebugPanel
+          runtime={diagnostics.runtime}
+          repositoryMeta={diagnostics.repositoryMeta}
+          reports={diagnostics.reports}
+          partial={diagnostics.partial}
+        />
+      ) : null}
     </div>
   );
 }

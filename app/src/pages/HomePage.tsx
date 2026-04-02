@@ -1,9 +1,11 @@
 import { DatePickerBar } from "../components/DatePickerBar";
+import { ForecastDebugPanel } from "../components/ForecastDebugPanel";
 import { SpotRankingCard } from "../components/SpotRankingCard";
 import { useDailyRecommendations } from "../hooks/useFishingForecast";
 
 export function HomePage() {
-  const { date, availableDates, recommendations, loading, setDate } = useDailyRecommendations();
+  const { date, availableDates, recommendations, diagnostics, loading, setDate } =
+    useDailyRecommendations();
 
   return (
     <div className="page-grid">
@@ -36,6 +38,15 @@ export function HomePage() {
           </div>
         </aside>
       </section>
+
+      {diagnostics ? (
+        <ForecastDebugPanel
+          runtime={diagnostics.runtime}
+          repositoryMeta={diagnostics.repositoryMeta}
+          reports={diagnostics.reports}
+          partial={diagnostics.partial}
+        />
+      ) : null}
     </div>
   );
 }

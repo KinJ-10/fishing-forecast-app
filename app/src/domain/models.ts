@@ -147,24 +147,39 @@ export interface Recommendation {
 
 export interface DailyForecastQuery {
   date: string;
+  cachePolicy?: import("./sourceIntegration").CachePolicy;
+  allowPartial?: boolean;
+  maxStalenessMinutes?: number;
 }
 
 export interface SpotForecastQuery {
   spotId: SpotId;
   date: string;
+  cachePolicy?: import("./sourceIntegration").CachePolicy;
+  allowPartial?: boolean;
+  maxStalenessMinutes?: number;
 }
 
 export interface RepositoryMeta {
   sourceName: string;
-  mode: "mock" | "live";
+  mode: "mock" | "real" | "hybrid";
+  supportsCache: boolean;
+  supportsPartialData: boolean;
 }
 
 export interface ForecastRepository {
   getRepositoryMeta(): Promise<RepositoryMeta>;
-  listSpots(): Promise<Spot[]>;
-  listAvailableDates(): Promise<string[]>;
-  getDailyForecasts(query: DailyForecastQuery): Promise<DailySpotForecast[]>;
-  getSpotForecast(query: SpotForecastQuery): Promise<DailySpotForecast | undefined>;
-  getSpotById(spotId: SpotId): Promise<Spot | undefined>;
-  listGlossaryTerms(): Promise<GlossaryTerm[]>;
+  getSourceCatalog(): Promise<import("./sourceIntegration").SourceCatalogEntry[]>;
+  listSpots(): Promise<import("./sourceIntegration").RepositoryResult<Spot[]>>;
+  listAvailableDates(): Promise<import("./sourceIntegration").RepositoryResult<string[]>>;
+  getDailyForecasts(
+    query: DailyForecastQuery,
+  ): Promise<import("./sourceIntegration").RepositoryResult<DailySpotForecast[]>>;
+  getSpotForecast(
+    query: SpotForecastQuery,
+  ): Promise<import("./sourceIntegration").RepositoryResult<DailySpotForecast | undefined>>;
+  getSpotById(
+    spotId: SpotId,
+  ): Promise<import("./sourceIntegration").RepositoryResult<Spot | undefined>>;
+  listGlossaryTerms(): Promise<import("./sourceIntegration").RepositoryResult<GlossaryTerm[]>>;
 }

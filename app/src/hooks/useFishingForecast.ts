@@ -2,9 +2,10 @@ import { useEffect, useState } from "react";
 import { GlossaryTerm, Recommendation, SpotId } from "../domain/models";
 import {
   getAvailableDates,
-  getDailyRecommendations,
+  getDailyRecommendationsWithDiagnostics,
+  ForecastDiagnostics,
   getGlossary,
-  getSpotDetail,
+  getSpotDetailWithDiagnostics,
 } from "../services/forecastService";
 import { getTomorrowDateString } from "../lib/date";
 
@@ -12,6 +13,7 @@ export function useDailyRecommendations(selectedDate?: string) {
   const [availableDates, setAvailableDates] = useState<string[]>([]);
   const [date, setDate] = useState(selectedDate ?? getTomorrowDateString());
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
+  const [diagnostics, setDiagnostics] = useState<ForecastDiagnostics>();
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -22,8 +24,9 @@ export function useDailyRecommendations(selectedDate?: string) {
       setAvailableDates(dates);
       setDate(normalizedDate);
       setLoading(true);
-      const data = await getDailyRecommendations(normalizedDate);
-      setRecommendations(data);
+      const result = await getDailyRecommendationsWithDiagnostics(normalizedDate);
+      setRecommendations(result.recommendations);
+      setDiagnostics(result.diagnostics);
       setLoading(false);
     }
 
@@ -34,6 +37,7 @@ export function useDailyRecommendations(selectedDate?: string) {
     date,
     availableDates,
     recommendations,
+    diagnostics,
     loading,
     setDate,
   };
@@ -41,12 +45,12 @@ export function useDailyRecommendations(selectedDate?: string) {
 
 export function useSpotRecommendation(spotId: SpotId, date: string) {
   const [loading, setLoading] = useState(true);
-  const [result, setResult] = useState<Awaited<ReturnType<typeof getSpotDetail>>>();
+  const [result, setResult] = useState<Awaited<ReturnType<typeof getSpotDetailWithDiagnostics>>>();
 
   useEffect(() => {
     async function load(): Promise<void> {
       setLoading(true);
-      const detail = await getSpotDetail(spotId, date);
+      const detail = await getSpotDetailWithDiagnostics(spotId, date);
       setResult(detail);
       setLoading(false);
     }
@@ -58,6 +62,7 @@ export function useSpotRecommendation(spotId: SpotId, date: string) {
     loading,
     spot: result?.spot,
     recommendation: result?.recommendation,
+    diagnostics: result?.diagnostics,
   };
 }
 

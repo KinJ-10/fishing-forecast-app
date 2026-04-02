@@ -8,6 +8,8 @@ import {
   SpotForecastQuery,
   SpotId,
 } from "../../domain/models";
+import { RepositoryResult } from "../../domain/sourceIntegration";
+import { sourceCatalog } from "../../data-sources/sourceCatalog";
 import { glossaryTerms } from "../glossary";
 import { forecasts, spots } from "../mockData";
 
@@ -20,33 +22,65 @@ export class MockForecastRepository implements ForecastRepository {
     return {
       sourceName: "mock-forecast-repository",
       mode: "mock",
+      supportsCache: false,
+      supportsPartialData: true,
     };
   }
 
-  async listSpots(): Promise<Spot[]> {
-    return spots;
+  async getSourceCatalog() {
+    return sourceCatalog;
   }
 
-  async listAvailableDates(): Promise<string[]> {
+  async listSpots(): Promise<RepositoryResult<Spot[]>> {
+    return {
+      data: spots,
+      partial: false,
+      reports: [],
+    };
+  }
+
+  async listAvailableDates(): Promise<RepositoryResult<string[]>> {
     const dateSet = new Set(forecasts.map((forecast) => forecast.date));
-    return sortDates(Array.from(dateSet));
+    return {
+      data: sortDates(Array.from(dateSet)),
+      partial: false,
+      reports: [],
+    };
   }
 
-  async getDailyForecasts(query: DailyForecastQuery): Promise<DailySpotForecast[]> {
-    return forecasts.filter((forecast) => forecast.date === query.date);
+  async getDailyForecasts(query: DailyForecastQuery): Promise<RepositoryResult<DailySpotForecast[]>> {
+    return {
+      data: forecasts.filter((forecast) => forecast.date === query.date),
+      partial: false,
+      reports: [],
+    };
   }
 
-  async getSpotForecast(query: SpotForecastQuery): Promise<DailySpotForecast | undefined> {
-    return forecasts.find(
-      (forecast) => forecast.date === query.date && forecast.spotId === query.spotId,
-    );
+  async getSpotForecast(
+    query: SpotForecastQuery,
+  ): Promise<RepositoryResult<DailySpotForecast | undefined>> {
+    return {
+      data: forecasts.find(
+        (forecast) => forecast.date === query.date && forecast.spotId === query.spotId,
+      ),
+      partial: false,
+      reports: [],
+    };
   }
 
-  async getSpotById(spotId: SpotId): Promise<Spot | undefined> {
-    return spots.find((spot) => spot.id === spotId);
+  async getSpotById(spotId: SpotId): Promise<RepositoryResult<Spot | undefined>> {
+    return {
+      data: spots.find((spot) => spot.id === spotId),
+      partial: false,
+      reports: [],
+    };
   }
 
-  async listGlossaryTerms(): Promise<GlossaryTerm[]> {
-    return glossaryTerms;
+  async listGlossaryTerms(): Promise<RepositoryResult<GlossaryTerm[]>> {
+    return {
+      data: glossaryTerms,
+      partial: false,
+      reports: [],
+    };
   }
 }
